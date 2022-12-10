@@ -7,7 +7,7 @@ RUN go mod download
 
 RUN go build -o /audioApi
 
-RUN mkdir /data
+# RUN mkdir /data
 
 EXPOSE 8080
 

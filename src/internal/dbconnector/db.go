@@ -44,7 +44,6 @@ func (dc *DBConnection) Close() {
 
 func (dc *DBConnection) CountWavFiles(name string) (int, error) {
 	queryString := fmt.Sprintf("SELECT count(*) FROM audio_db.wavs WHERE name='%s'", name)
-	fmt.Println(queryString)
 	row := dc.DB.QueryRow(queryString)
 	var count int
 	err := row.Scan(&count)
@@ -52,7 +51,6 @@ func (dc *DBConnection) CountWavFiles(name string) (int, error) {
 }
 
 func (dc *DBConnection) AddWavFile(wav *model.WavFile) error {
-	fmt.Println(*wav)
 	_, err := dc.DB.Exec("INSERT INTO audio_db.wavs "+
 		"(name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec, file_uri) "+
 		"VALUES (?,?,?,?,?,?,?,?);",
@@ -67,4 +65,13 @@ func (dc *DBConnection) DeleteWav(name string) error {
 	execString := fmt.Sprintf("DELETE FROM audio_db.wavs WHERE name='%s'", name)
 	_, err := dc.DB.Exec(execString)
 	return err
+}
+
+func (dc *DBConnection) GetWavURI(name string) (string, error) {
+	queryString := fmt.Sprintf("SELECT file_uri FROM audio_db.wavs WHERE name='%s'", name)
+	row := dc.DB.QueryRow(queryString)
+
+	var uri string
+	err := row.Scan(&uri)
+	return uri, err
 }

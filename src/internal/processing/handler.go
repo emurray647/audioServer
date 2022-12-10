@@ -46,12 +46,31 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	filename, ok := vars["filename"]
 	if !ok {
 		http.Error(w, "did not provide file to delete", http.StatusBadRequest)
+		return
 	}
 
 	err := delete(filename)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("could not delete file: %v", err), http.StatusBadRequest)
 	}
+}
+
+func Download(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		http.Error(w, "no name value provided", http.StatusBadRequest)
+		return
+	}
+
+	buffer, err := download(name)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error retrieving file: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Write(buffer)
 }
 
 func upload(filename string, data []byte) error {
@@ -80,8 +99,8 @@ func upload(filename string, data []byte) error {
 	}
 
 	// write the file to disk
-	fullpath := fmt.Sprintf("%s/%s.wav", writePrefix, filename)
-	err = os.WriteFile(filename, data, 0644)
+	fullpath := fmt.Sprintf("%s/%s", writePrefix, filename)
+	err = os.WriteFile(fullpath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file to disk: %w", err)
 	}
@@ -115,7 +134,28 @@ func delete(filename string) error {
 	return nil
 }
 
+func download(filename string) ([]byte, error) {
+	dbConnection, err := dbconnector.OpenDBConnection()
+	if err != nil {
+		return nil, fmt.Errorf("could not open database connection: %w", err)
+
+	}
+	defer dbConnection.Close()
+
+	uri, err := dbConnection.GetWavURI(filename)
+	if err != nil {
+		return nil, fmt.Errorf("could not find wav in db: %w", err)
+	}
+
+	fileBytes, err := ioutil.ReadFile(uri)
+	if err != nil {
+		return nil, fmt.Errorf("could not read file: %w", err)
+	}
+
+	return fileBytes, nil
+}
+
 func generateName(buffer []byte) string {
 	hash := md5.Sum(buffer)
-	return hex.EncodeToString(hash[:])
+	return fmt.Sprintf("%s.wav", hex.EncodeToString(hash[:]))
 }

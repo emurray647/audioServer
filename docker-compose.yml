@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
+    volumes:
+      - data:/data/
 
   db:
     image: mysql:5.7
@@ -26,6 +28,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
+  data:
   db:
 
 networks:

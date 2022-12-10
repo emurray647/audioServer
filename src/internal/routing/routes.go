@@ -11,14 +11,14 @@ import (
 func InitializeRoutes() *mux.Router {
 	r := mux.NewRouter()
 
-	r.StrictSlash(false)
+	r.StrictSlash(true)
 
 	r.HandleFunc("/files/", processing.Upload).Methods("POST")
 	r.HandleFunc("/files/{filename}", processing.Delete).Methods("DELETE")
 
 	r.HandleFunc("/list/", processing.List).Methods("GET")
 
-	r.HandleFunc("/download/", Downloads)
+	r.HandleFunc("/download/", processing.Download).Methods("GET")
 
 	return r
 }
