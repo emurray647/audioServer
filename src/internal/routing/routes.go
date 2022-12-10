@@ -14,6 +14,7 @@ func InitializeRoutes() *mux.Router {
 	r.StrictSlash(false)
 
 	r.HandleFunc("/files/", processing.Upload).Methods("POST")
+	r.HandleFunc("/files/{filename}", processing.Delete).Methods("DELETE")
 
 	r.HandleFunc("/list/", processing.List).Methods("GET")
 

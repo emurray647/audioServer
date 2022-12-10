@@ -6,3 +6,9 @@ type WavFileDetails struct {
 }
 
 type WavFilesDetailsSlice []WavFileDetails
+
+type WavFile struct {
+	Name     string
+	Duration int
+	URI      string
+}
