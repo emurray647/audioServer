@@ -195,3 +195,16 @@ func setStatus(w http.ResponseWriter, statusCode int, message string, success bo
 
 	json.NewEncoder(w).Encode(sm)
 }
+
+func setErrorStatus(w http.ResponseWriter, statusCode int, err error) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json")
+
+	sm := model.StatusMessage{
+		StatusCode: statusCode,
+		Message:    err.Error(),
+		Success:    false,
+	}
+
+	json.NewEncoder(w).Encode(sm)
+}

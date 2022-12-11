@@ -111,3 +111,27 @@ func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error
 
 	return &details, nil
 }
+
+func (dc *DBConnection) GetWavs() (*model.WavFilesDetailsSlice, error) {
+	queryString := fmt.Sprintf("SELECT " +
+		"name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec" +
+		" FROM audio_db.wavs")
+
+	rows, err := dc.DB.Query(queryString)
+	if err != nil {
+		return nil, fmt.Errorf("failed querying database: %w", err)
+	}
+
+	var result model.WavFilesDetailsSlice
+	for rows.Next() {
+		details := model.WavFileDetails{}
+		err = rows.Scan(&details.Name, &details.FileSize, &details.Duration, &details.NumChannels,
+			&details.SampleRate, &details.AudioFormat, &details.AvgBytesPerSec)
+		if err != nil {
+			return &result, fmt.Errorf("error scanning query result: %w", err)
+		}
+		result = append(result, details)
+	}
+
+	return &result, nil
+}
