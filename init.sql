@@ -7,11 +7,11 @@ CREATE TABLE wavs (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(64) NOT NULL,
     file_size INTEGER NOT NULL,
-    length_seconds FLOAT,
+    duration FLOAT,
     num_channels INTEGER,
     sample_rate INTEGER,
     audio_format INTEGER,
-    avg_bytes_per_sec INTEGER,
+    avg_bytes_per_second INTEGER,
     file_uri VARCHAR(64)
 );
 

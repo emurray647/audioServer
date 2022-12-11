@@ -52,7 +52,7 @@ func (dc *DBConnection) CountWavFiles(name string) (int, error) {
 
 func (dc *DBConnection) AddWavFile(wav *model.WavFile) error {
 	_, err := dc.DB.Exec("INSERT INTO audio_db.wavs "+
-		"(name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec, file_uri) "+
+		"(name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second, file_uri) "+
 		"VALUES (?,?,?,?,?,?,?,?);",
 		wav.Name, wav.FileSize, wav.Duration, wav.NumChannels, wav.SampleRate, wav.AudioFormat, wav.AvgBytesPerSec, wav.URI)
 	if err != nil {
@@ -96,7 +96,7 @@ func (dc *DBConnection) GetWavURI(name string) (string, error) {
 func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error) {
 
 	queryString := fmt.Sprintf("SELECT "+
-		"name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec "+
+		"name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second "+
 		"FROM audio_db.wavs WHERE name='%s'", name)
 	row := dc.DB.QueryRow(queryString)
 
@@ -112,10 +112,17 @@ func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error
 	return &details, nil
 }
 
-func (dc *DBConnection) GetWavs() (*model.WavFilesDetailsSlice, error) {
+func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsSlice, error) {
 	queryString := fmt.Sprintf("SELECT " +
-		"name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec" +
+		"name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second" +
 		" FROM audio_db.wavs")
+
+	if len(filterStrings) > 0 {
+		queryString += " WHERE " + filterStrings[0]
+	}
+	for _, filter := range filterStrings[1:] {
+		queryString += ", " + filter
+	}
 
 	rows, err := dc.DB.Query(queryString)
 	if err != nil {

@@ -1,13 +1,13 @@
 package model
 
 type WavFileDetails struct {
-	Name           string
-	FileSize       int
-	Duration       *float64
-	NumChannels    *int
-	SampleRate     *int
-	AudioFormat    *uint16
-	AvgBytesPerSec *uint32
+	Name           string   `json:"name"`
+	FileSize       int      `json:"file_size"`
+	Duration       *float64 `json:"duration"`
+	NumChannels    *int     `json:"num_channels"`
+	SampleRate     *int     `json:"sample_rate"`
+	AudioFormat    *uint16  `json:"audio_format"`
+	AvgBytesPerSec *uint32  `json:"avg_bytes_per_second"`
 }
 
 type WavFilesDetailsSlice []WavFileDetails

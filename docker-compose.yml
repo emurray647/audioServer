@@ -26,6 +26,8 @@ services:
     volumes:
       - db:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    logging:
+      driver: "none"
 
 volumes:
   data:
