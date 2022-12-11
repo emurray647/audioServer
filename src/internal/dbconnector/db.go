@@ -92,3 +92,22 @@ func (dc *DBConnection) GetWavURI(name string) (string, error) {
 	err := row.Scan(&uri)
 	return uri, err
 }
+
+func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error) {
+
+	queryString := fmt.Sprintf("SELECT "+
+		"name, file_size, length_seconds, num_channels, sample_rate, audio_format, avg_bytes_per_sec "+
+		"FROM audio_db.wavs WHERE name='%s'", name)
+	row := dc.DB.QueryRow(queryString)
+
+	var details model.WavFileDetails
+
+	err := row.Scan(&details.Name, &details.FileSize, &details.Duration, &details.NumChannels, &details.SampleRate,
+		&details.AudioFormat, &details.AvgBytesPerSec)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to read details from DB: %w", err)
+	}
+
+	return &details, nil
+}

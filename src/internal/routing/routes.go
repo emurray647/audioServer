@@ -20,6 +20,8 @@ func InitializeRoutes() *mux.Router {
 
 	r.HandleFunc("/download/", processing.Download).Methods("GET")
 
+	r.HandleFunc("/info", processing.Info).Methods("GET")
+
 	return r
 }
 

@@ -22,7 +22,6 @@ const (
 )
 
 func Upload(w http.ResponseWriter, r *http.Request) {
-
 	// grab the data from the request and grab the name parameter (if applicable)
 	buffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -52,7 +51,6 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("delete called")
 	// grab off the filename variable
 	vars := mux.Vars(r)
 	filename, ok := vars["filename"]
@@ -61,8 +59,6 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "did not provide file to delete", http.StatusBadRequest)
 		return
 	}
-
-	fmt.Println(filename)
 
 	err := delete(filename)
 	if err != nil {
