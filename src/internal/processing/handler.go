@@ -2,7 +2,9 @@ package processing
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +14,7 @@ import (
 	"github.com/emurray647/audioServer/internal/dbconnector"
 	"github.com/emurray647/audioServer/internal/model"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -23,7 +26,8 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	// grab the data from the request and grab the name parameter (if applicable)
 	buffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to read request body: %v", err), http.StatusBadRequest)
+		log.Errorf("could not read request body: %w", err)
+		setStatus(w, http.StatusBadRequest, "could not read POST body", false)
 		return
 	}
 	name := r.URL.Query().Get("name")
@@ -34,24 +38,41 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	// upload the file
 	err = upload(name, buffer)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("could not open database connection: %v", err), http.StatusInternalServerError)
+		log.Errorf("error uploading file: %w", err)
+		if errors.Is(err, fileAlreadyExists) {
+			setStatus(w, http.StatusConflict, fileAlreadyExists.Error(), false)
+		} else if errors.Is(err, invalidWAVError) {
+			setStatus(w, http.StatusBadRequest, invalidWAVError.Error(), false)
+		} else {
+			setStatus(w, http.StatusInternalServerError, "unknown error", false)
+		}
 		return
 	}
 
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("delete called")
 	// grab off the filename variable
 	vars := mux.Vars(r)
 	filename, ok := vars["filename"]
 	if !ok {
+		log.Errorf("no file provided to delete")
 		http.Error(w, "did not provide file to delete", http.StatusBadRequest)
 		return
 	}
 
+	fmt.Println(filename)
+
 	err := delete(filename)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("could not delete file: %v", err), http.StatusBadRequest)
+		log.Errorf("could not delete file: %w", err)
+		if errors.Is(err, fileDoesNotExist) {
+			setStatus(w, http.StatusBadRequest, fileDoesNotExist.Error(), false)
+		} else {
+			setStatus(w, http.StatusInternalServerError, "unknown error", false)
+		}
+		return
 	}
 }
 
@@ -88,13 +109,13 @@ func upload(filename string, data []byte) error {
 		return fmt.Errorf("failed to read database: %w", err)
 	}
 	if count > 0 {
-		return fmt.Errorf("entry already exists")
+		return fileAlreadyExists
 	}
 
 	// before we write this file, we should verify it is a wav
 	// as well as get some stats about it
 	details, err := parseWav(filename, data)
-	if err != nil && errors.Is(err, &invalidFileError{}) {
+	if err != nil && errors.Is(err, invalidWAVError) {
 		return fmt.Errorf("invalid wav file: %w", err)
 	}
 
@@ -126,9 +147,15 @@ func delete(filename string) error {
 	}
 	defer dbConnection.Close()
 
-	err = dbConnection.DeleteWav(filename)
-	if err != nil {
+	fileURI, err := dbConnection.DeleteWav(filename)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return fileDoesNotExist
+	} else if err != nil {
 		return fmt.Errorf("could not delete file: %w", err)
+	}
+
+	if err = os.Remove(fileURI); err != nil {
+		return fmt.Errorf("could not remove file %s: %w", fileURI, err)
 	}
 
 	return nil
@@ -158,4 +185,17 @@ func download(filename string) ([]byte, error) {
 func generateName(buffer []byte) string {
 	hash := md5.Sum(buffer)
 	return fmt.Sprintf("%s.wav", hex.EncodeToString(hash[:]))
+}
+
+func setStatus(w http.ResponseWriter, statusCode int, message string, success bool) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json")
+
+	sm := model.StatusMessage{
+		StatusCode: statusCode,
+		Message:    message,
+		Success:    success,
+	}
+
+	json.NewEncoder(w).Encode(sm)
 }

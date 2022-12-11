@@ -61,10 +61,27 @@ func (dc *DBConnection) AddWavFile(wav *model.WavFile) error {
 	return nil
 }
 
-func (dc *DBConnection) DeleteWav(name string) error {
+func (dc *DBConnection) DeleteWav(name string) (string, error) {
+	tx, err := dc.DB.Begin()
+	if err != nil {
+		return "", fmt.Errorf("failed creating db transaction")
+	}
+	defer tx.Rollback()
+
+	queryString := fmt.Sprintf("SELECT file_uri FROM audio_db.wavs WHERE name='%s';", name)
+	row := tx.QueryRow(queryString)
+	var fileURI string
+	if err = row.Scan(&fileURI); err != nil {
+		return "", err
+	}
+
 	execString := fmt.Sprintf("DELETE FROM audio_db.wavs WHERE name='%s'", name)
-	_, err := dc.DB.Exec(execString)
-	return err
+	_, err = tx.Exec(execString)
+	if err = tx.Commit(); err != nil {
+		return "", fmt.Errorf("failed to commit transaction")
+	}
+
+	return fileURI, err
 }
 
 func (dc *DBConnection) GetWavURI(name string) (string, error) {

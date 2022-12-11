@@ -8,6 +8,25 @@
     main.go
 
 
+## endpoints
+
+### files
+
+invalid
+duplicate
+unknown error / server error
+
+| asdf | asdf |
+| --- | --- |
+| 200 | File successfully uploaded |
+| 400 | asdf |
+
+### download
+
+### list
+
+### info
+
 
 for `file` endpoint, store the file to the file system, and put its location
 into the db

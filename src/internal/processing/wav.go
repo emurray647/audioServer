@@ -24,7 +24,8 @@ func parseWav(name string, buffer []byte) (*model.WavFileDetails, error) {
 	decoder.ReadInfo()
 
 	if !decoder.IsValidFile() {
-		return nil, &invalidFileError{}
+		// return nil, &invalidFileError{}
+		return nil, invalidWAVError
 	}
 
 	details := &model.WavFileDetails{

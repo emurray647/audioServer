@@ -20,7 +20,7 @@ type WavFile struct {
 }
 
 type StatusMessage struct {
-	StatusCode int
-	Success    bool
-	Message    string
+	StatusCode int    `json:"status_code"`
+	Success    bool   `json:"success"`
+	Message    string `json:"message"`
 }
