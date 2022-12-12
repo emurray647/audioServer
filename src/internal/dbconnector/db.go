@@ -119,9 +119,9 @@ func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsS
 
 	if len(filterStrings) > 0 {
 		queryString += " WHERE " + filterStrings[0]
-	}
-	for _, filter := range filterStrings[1:] {
-		queryString += ", " + filter
+		for _, filter := range filterStrings[1:] {
+			queryString += ", " + filter
+		}
 	}
 
 	rows, err := dc.DB.Query(queryString)

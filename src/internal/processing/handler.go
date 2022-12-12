@@ -12,6 +12,7 @@ import (
 	"os"
 
 	"github.com/emurray647/audioServer/internal/dbconnector"
+	"github.com/emurray647/audioServer/internal/format"
 	"github.com/emurray647/audioServer/internal/model"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -22,6 +23,9 @@ const (
 )
 
 func Upload(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("upload")
+
 	// grab the data from the request and grab the name parameter (if applicable)
 	buffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -51,6 +55,9 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 }
 
 func Delete(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("delete")
+
 	// grab off the filename variable
 	vars := mux.Vars(r)
 	filename, ok := vars["filename"]
@@ -73,6 +80,9 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func Download(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println("download")
+
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		http.Error(w, "no name value provided", http.StatusBadRequest)
@@ -110,9 +120,9 @@ func upload(filename string, data []byte) error {
 
 	// before we write this file, we should verify it is a wav
 	// as well as get some stats about it
-	details, err := parseWav(filename, data)
-	if err != nil && errors.Is(err, invalidWAVError) {
-		return fmt.Errorf("invalid wav file: %w", err)
+	details, err := format.ParseFile(filename, data)
+	if err != nil && errors.Is(err, &format.InvalidFileError{}) {
+		return invalidWAVError
 	}
 
 	// write the file to disk

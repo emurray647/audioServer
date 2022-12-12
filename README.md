@@ -39,3 +39,11 @@ id, name, length_minutes, ..., filesystem_uri
 ```
 
 `curl -X POST --data-binary @/home/emurray/Downloads/CantinaBand60.wav http://localhost:8080/files/`
+
+
+maxduration=300 -> max,duration,300 -> duration <= 300
+
+TODO
+- index db
+- have successful delete return something
+- add mp3

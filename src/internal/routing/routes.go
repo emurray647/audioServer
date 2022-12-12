@@ -1,9 +1,6 @@
 package routing
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/emurray647/audioServer/internal/processing"
 	"github.com/gorilla/mux"
 )
@@ -24,8 +21,4 @@ func InitializeRoutes() *mux.Router {
 	r.HandleFunc("/info", processing.Info).Methods("GET")
 
 	return r
-}
-
-func Downloads(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("got Downloads")
 }
