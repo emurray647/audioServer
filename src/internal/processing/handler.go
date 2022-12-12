@@ -41,16 +41,21 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	// upload the file
 	err = upload(name, buffer)
 	if err != nil {
-		log.Errorf("error uploading file: %w", err)
+		err = fmt.Errorf("error uploading file: %w", err)
+		log.Errorf(err.Error())
 		if errors.Is(err, fileAlreadyExists) {
 			setStatus(w, http.StatusConflict, fileAlreadyExists.Error(), false)
-		} else if errors.Is(err, invalidWAVError) {
-			setStatus(w, http.StatusBadRequest, invalidWAVError.Error(), false)
+		} else if errors.Is(err, invalidFileFormat) {
+			setStatus(w, http.StatusBadRequest, invalidFileFormat.Error(), false)
+		} else if errors.Is(err, unknownFileType) {
+			setStatus(w, http.StatusBadRequest, unknownFileType.Error(), false)
 		} else {
 			setStatus(w, http.StatusInternalServerError, "unknown error", false)
 		}
 		return
 	}
+
+	setSuccess(w, http.StatusOK, "Successfully uploaded file")
 
 }
 
@@ -77,6 +82,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	setSuccess(w, http.StatusOK, fmt.Sprintf("Successfully deleted file %s", filename))
 }
 
 func Download(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +105,7 @@ func Download(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Write(buffer)
+
 }
 
 func upload(filename string, data []byte) error {
@@ -121,8 +129,14 @@ func upload(filename string, data []byte) error {
 	// before we write this file, we should verify it is a wav
 	// as well as get some stats about it
 	details, err := format.ParseFile(filename, data)
-	if err != nil && errors.Is(err, &format.InvalidFileError{}) {
-		return invalidWAVError
+	if err != nil && errors.Is(err, format.InvalidFile) {
+		fmt.Println("first error")
+		return invalidFileFormat
+	} else if err != nil && errors.Is(err, format.UnknownFormat) {
+		return unknownFileType
+	} else if err != nil {
+		fmt.Println("unknown error")
+		return err
 	}
 
 	// write the file to disk
@@ -201,6 +215,19 @@ func setStatus(w http.ResponseWriter, statusCode int, message string, success bo
 		StatusCode: statusCode,
 		Message:    message,
 		Success:    success,
+	}
+
+	json.NewEncoder(w).Encode(sm)
+}
+
+func setSuccess(w http.ResponseWriter, statusCode int, message string) {
+	w.WriteHeader(statusCode)
+	w.Header().Set("Content-Type", "application/json")
+
+	sm := model.StatusMessage{
+		StatusCode: statusCode,
+		Message:    message,
+		Success:    true,
 	}
 
 	json.NewEncoder(w).Encode(sm)

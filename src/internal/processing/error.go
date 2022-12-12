@@ -9,8 +9,26 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// type customError struct {
+// 	s string
+// }
+
+// func createCustomError(msg string) error {
+// 	return &customError{
+// 		s: msg,
+// 	}
+// }
+
+// func (e *customError) Error() string {
+// 	return e.s
+// }
+
 var (
-	invalidWAVError   error = errors.New("invalid WAV file")
+	invalidWAVError error = errors.New("invalid WAV file")
+
+	invalidFileFormat error = errors.New("invalid file format")
+	unknownFileType   error = errors.New("unknown file extension")
+
 	fileAlreadyExists error = errors.New("file already exists")
 
 	fileDoesNotExist error = errors.New("file does not exist")

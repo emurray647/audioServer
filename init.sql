@@ -15,4 +15,6 @@ CREATE TABLE wavs (
     file_uri VARCHAR(64)
 );
 
+-- almost all lookups are on the name column
+CREATE INDEX audio_name_index ON wavs(name);
 
