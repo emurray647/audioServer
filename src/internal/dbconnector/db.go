@@ -14,7 +14,7 @@ type DBConnection struct {
 
 func OpenDBConnection() (*DBConnection, error) {
 	cfg := mysql.Config{
-		User:                 "root", //"user",
+		User:                 "user",
 		Passwd:               "password",
 		Net:                  "tcp",
 		Addr:                 "audio_db",

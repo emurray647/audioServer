@@ -25,6 +25,9 @@ func CreateListHandler() http.HandlerFunc {
 
 	for i := 0; i < t.NumField(); i++ {
 		tag := t.Field(i).Tag.Get("json")
+		if t.Field(i).Type.Kind() == reflect.String {
+			tag = fmt.Sprintf("'%s'", tag)
+		}
 		queryMap[tag] = fmt.Sprintf("%s = {value}", tag)
 		queryMap[fmt.Sprintf("max%s", tag)] = fmt.Sprintf("%s <= {value}", tag)
 		queryMap[fmt.Sprintf("min%s", tag)] = fmt.Sprintf("%s >= {value}", tag)
@@ -35,13 +38,16 @@ func CreateListHandler() http.HandlerFunc {
 
 		details, err := list(values, queryMap)
 		if err != nil {
-			logError(w, http.StatusBadRequest, err)
+			log.Errorf(err.Error())
+			setStatus(w, http.StatusInternalServerError, "unknown err", false)
 			return
 		}
 
 		err = json.NewEncoder(w).Encode(details)
 		if err != nil {
-			logError(w, http.StatusInternalServerError, fmt.Errorf("failed to encode wav JSON: %w", err))
+			log.Errorf(err.Error())
+			// logError(w, http.StatusInternalServerError, fmt.Errorf("failed to encode wav JSON: %w", err))
+			setStatus(w, http.StatusInternalServerError, "failed to encode wav JSON", false)
 			return
 		}
 	}

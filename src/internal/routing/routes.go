@@ -12,16 +12,19 @@ import (
 func InitializeRoutes() http.Handler {
 	r := mux.NewRouter()
 
-	r.StrictSlash(true)
-
+	// POST /files
 	r.HandleFunc("/files", processing.Upload).Methods("POST")
+
+	// DELETE /files
 	r.HandleFunc("/files", processing.Delete).Methods("DELETE")
 
-	// r.HandleFunc("/list/", processing.List).Methods("GET")
+	// GET /list
 	r.HandleFunc("/list", processing.CreateListHandler()).Methods("GET")
 
+	// GET /download
 	r.HandleFunc("/download", processing.Download).Methods("GET")
 
+	// GET /info
 	r.HandleFunc("/info", processing.Info).Methods("GET")
 
 	return middleware(r)
