@@ -14,7 +14,6 @@ import (
 	"github.com/emurray647/audioServer/internal/dbconnector"
 	"github.com/emurray647/audioServer/internal/format"
 	"github.com/emurray647/audioServer/internal/model"
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -64,11 +63,17 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("delete")
 
 	// grab off the filename variable
-	vars := mux.Vars(r)
-	filename, ok := vars["filename"]
-	if !ok {
-		log.Errorf("no file provided to delete")
-		http.Error(w, "did not provide file to delete", http.StatusBadRequest)
+	// vars := mux.Vars(r)
+	// filename, ok := vars["filename"]
+	// if !ok {
+	// 	log.Errorf("no file provided to delete")
+	// 	http.Error(w, "did not provide file to delete", http.StatusBadRequest)
+	// 	return
+	// }
+	filename := r.URL.Query().Get("name")
+	if filename == "" {
+		// http.Error(w, "did not provide file to delete", http.StatusBadRequest)
+		setStatus(w, http.StatusBadRequest, "did not provide file to delete", false)
 		return
 	}
 
