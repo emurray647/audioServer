@@ -29,7 +29,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	buffer, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Errorf("could not read request body: %w", err)
-		setStatus(w, http.StatusBadRequest, "could not read POST body", false)
+		setStatus(w, http.StatusInternalServerError, "could not read POST body", false)
 		return
 	}
 	name := r.URL.Query().Get("name")
@@ -63,16 +63,8 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("delete")
 
 	// grab off the filename variable
-	// vars := mux.Vars(r)
-	// filename, ok := vars["filename"]
-	// if !ok {
-	// 	log.Errorf("no file provided to delete")
-	// 	http.Error(w, "did not provide file to delete", http.StatusBadRequest)
-	// 	return
-	// }
 	filename := r.URL.Query().Get("name")
 	if filename == "" {
-		// http.Error(w, "did not provide file to delete", http.StatusBadRequest)
 		setStatus(w, http.StatusBadRequest, "did not provide file to delete", false)
 		return
 	}
@@ -102,8 +94,12 @@ func Download(w http.ResponseWriter, r *http.Request) {
 	}
 
 	buffer, err := download(name)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("error retrieving file: %v", err), http.StatusInternalServerError)
+	if err != nil && errors.Is(err, fileDoesNotExist) {
+		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error(), false)
+		return
+	} else if err != nil {
+		log.Errorf(err.Error())
+		setStatus(w, http.StatusInternalServerError, "unknown error", false)
 		return
 	}
 
@@ -196,6 +192,9 @@ func download(filename string) ([]byte, error) {
 
 	uri, err := dbConnection.GetWavURI(filename)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fileDoesNotExist
+		}
 		return nil, fmt.Errorf("could not find wav in db: %w", err)
 	}
 

@@ -1,7 +1,9 @@
 package processing
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -20,8 +22,11 @@ func Info(w http.ResponseWriter, r *http.Request) {
 	}
 
 	details, err := info(name)
-	if err != nil {
-		setStatus(w, http.StatusBadRequest, "unknown error", false)
+	if err != nil && errors.Is(err, fileDoesNotExist) {
+		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error(), false)
+		return
+	} else if err != nil {
+		setStatus(w, http.StatusInternalServerError, "unknown error", false)
 		return
 	}
 
@@ -41,6 +46,9 @@ func info(name string) (*model.WavFileDetails, error) {
 
 	details, err := dbConnection.GetWavDetails(name)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fileDoesNotExist
+		}
 		return nil, fmt.Errorf("failed getting wav details: %w", err)
 	}
 
