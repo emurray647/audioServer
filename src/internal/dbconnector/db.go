@@ -12,24 +12,19 @@ type DBConnection struct {
 	DB *sql.DB
 }
 
-func OpenDBConnection() (*DBConnection, error) {
+func OpenDBConnection(dbUser, dbPass, dbHost, dbName string) (*DBConnection, error) {
 	cfg := mysql.Config{
-		User:                 "user",
-		Passwd:               "password",
+		User:                 dbUser,
+		Passwd:               dbPass,
 		Net:                  "tcp",
-		Addr:                 "audio_db",
-		DBName:               "audio_db",
+		Addr:                 dbHost,
+		DBName:               dbName,
 		AllowNativePasswords: true,
 	}
 
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, fmt.Errorf("failed to contact database: %w", err)
 	}
 
 	connection := &DBConnection{
@@ -52,9 +47,9 @@ func (dc *DBConnection) CountWavFiles(name string) (int, error) {
 
 func (dc *DBConnection) AddWavFile(wav *model.WavFile) error {
 	_, err := dc.DB.Exec("INSERT INTO audio_db.wavs "+
-		"(name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second, file_uri) "+
-		"VALUES (?,?,?,?,?,?,?,?);",
-		wav.Name, wav.FileSize, wav.Duration, wav.NumChannels, wav.SampleRate, wav.AudioFormat, wav.AvgBytesPerSec, wav.URI)
+		"(name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second, file_uri) "+
+		"VALUES (?,?,?,?,?,?,?,?,?);",
+		wav.Name, wav.FileSize, wav.Format, wav.Duration, wav.NumChannels, wav.SampleRate, wav.AudioFormat, wav.AvgBytesPerSec, wav.URI)
 	if err != nil {
 		return fmt.Errorf("failed to execute SQL statement: %w", err)
 	}
@@ -96,13 +91,13 @@ func (dc *DBConnection) GetWavURI(name string) (string, error) {
 func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error) {
 
 	queryString := fmt.Sprintf("SELECT "+
-		"name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second "+
+		"name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second "+
 		"FROM audio_db.wavs WHERE name='%s'", name)
 	row := dc.DB.QueryRow(queryString)
 
 	var details model.WavFileDetails
 
-	err := row.Scan(&details.Name, &details.FileSize, &details.Duration, &details.NumChannels, &details.SampleRate,
+	err := row.Scan(&details.Name, &details.FileSize, &details.Format, &details.Duration, &details.NumChannels, &details.SampleRate,
 		&details.AudioFormat, &details.AvgBytesPerSec)
 
 	if err != nil {
@@ -114,7 +109,7 @@ func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error
 
 func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsSlice, error) {
 	queryString := fmt.Sprintf("SELECT " +
-		"name, file_size, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second" +
+		"name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second" +
 		" FROM audio_db.wavs")
 
 	if len(filterStrings) > 0 {
@@ -132,7 +127,7 @@ func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsS
 	var result model.WavFilesDetailsSlice
 	for rows.Next() {
 		details := model.WavFileDetails{}
-		err = rows.Scan(&details.Name, &details.FileSize, &details.Duration, &details.NumChannels,
+		err = rows.Scan(&details.Name, &details.FileSize, &details.Format, &details.Duration, &details.NumChannels,
 			&details.SampleRate, &details.AudioFormat, &details.AvgBytesPerSec)
 		if err != nil {
 			return &result, fmt.Errorf("error scanning query result: %w", err)

@@ -21,6 +21,7 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 	result := model.WavFileDetails{
 		Name:     name,
 		FileSize: len(buffer),
+		Format:   "unknown",
 	}
 	var err error
 
@@ -43,8 +44,6 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 		return nil, UnknownFormat
 	}
 
-	// result.Name = name
-	// result.FileSize = len(buffer)
 	return &result, nil
 
 }

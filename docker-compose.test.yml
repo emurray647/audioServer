@@ -1,27 +1,27 @@
 version: '2'
 
 services:
-  audioapi:
+  audioapi_test:
     build:
       context: ./src
       dockerfile: Dockerfile
       args:
         DB_USER: user
         DB_PASS: password
-        DB_HOST: audio_db
+        DB_HOST: test_db
         DB_NAME: audio_db
-        FILE_DIRECTORY: /data
+        FILE_DIRECTORY: /test-data
     depends_on:
-      - db
+      - test_db
     ports:
       - "8080:8080"
     volumes:
-      - data:/data/
-
-  db:
+      - test-data:/test-data/
+    
+  test_db:
     image: mysql:5.7
     restart: always
-    hostname: audio_db
+    hostname: test_db
     environment:
       MYSQL_DATABASE: 'audio_db'
       MYSQL_USER: 'user'
@@ -32,11 +32,19 @@ services:
     expose:
       - '3306'
     volumes:
-      - db:/var/lib/mysql
+      - test-db:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     logging:
       driver: "none"
 
+  test-client:
+    build:
+      context: ./
+      dockerfile: ./test/Dockerfile
+      args:
+        SRC_ROOT: ./src
+        TEST_ROOT: ./test
+
 volumes:
-  data:
-  db:
+  test-data:
+  test-db:

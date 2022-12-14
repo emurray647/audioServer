@@ -1,4 +1,16 @@
-FROM golang:1.16-alpine
+ARG GOVERSION=1.16
+FROM golang:${GOVERSION} AS builder
+
+ARG DB_USER
+ENV DB_USER=$DB_USER
+ARG DB_PASS
+ENV DB_PASS=$DB_PASS
+ARG DB_HOST
+ENV DB_HOST=$DB_HOST
+ARG DB_NAME
+ENV DB_NAME=$DB_NAME
+ARG FILE_DIRECTORY
+ENV FILE_DIRECTORY=$FILE_DIRECTORY
 
 ADD . /api
 WORKDIR /api
@@ -7,8 +19,6 @@ RUN go mod download
 
 RUN go build -o /audioApi
 
-# RUN mkdir /data
-
 EXPOSE 8080
 
-CMD [ "/audioApi" ]
+CMD /audioApi -dbuser ${DB_USER} -dbpass ${DB_PASS} -dbhost ${DB_HOST} -dbname ${DB_NAME} -fileDirectory ${FILE_DIRECTORY}

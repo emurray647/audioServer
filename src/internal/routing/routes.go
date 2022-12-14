@@ -4,28 +4,31 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/emurray647/audioServer/internal/dbconnector"
 	"github.com/emurray647/audioServer/internal/processing"
 	"github.com/gorilla/mux"
 )
 
 // func InitializeRoutes() *mux.Router {
-func InitializeRoutes() http.Handler {
+func InitializeRoutes(db *dbconnector.DBConnection, filePrefix string) http.Handler {
 	r := mux.NewRouter()
 
+	processor := processing.NewRequestProcessor(db, filePrefix)
+
 	// POST /files
-	r.HandleFunc("/files", processing.Upload).Methods("POST")
+	r.HandleFunc("/files", processor.Upload).Methods("POST")
 
 	// DELETE /files
-	r.HandleFunc("/files", processing.Delete).Methods("DELETE")
+	r.HandleFunc("/files", processor.Delete).Methods("DELETE")
 
 	// GET /list
-	r.HandleFunc("/list", processing.CreateListHandler()).Methods("GET")
+	r.HandleFunc("/list", processor.CreateListHandler()).Methods("GET")
 
 	// GET /download
-	r.HandleFunc("/download", processing.Download).Methods("GET")
+	r.HandleFunc("/download", processor.Download).Methods("GET")
 
 	// GET /info
-	r.HandleFunc("/info", processing.Info).Methods("GET")
+	r.HandleFunc("/info", processor.Info).Methods("GET")
 
 	return middleware(r)
 }

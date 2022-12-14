@@ -7,12 +7,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/emurray647/audioServer/internal/dbconnector"
 	"github.com/emurray647/audioServer/internal/model"
 	log "github.com/sirupsen/logrus"
 )
 
-func Info(w http.ResponseWriter, r *http.Request) {
+func (p *RequestProcessor) Info(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 	if name == "" {
@@ -21,7 +20,7 @@ func Info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	details, err := info(name)
+	details, err := p.info(name)
 	if err != nil && errors.Is(err, fileDoesNotExist) {
 		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error(), false)
 		return
@@ -36,15 +35,8 @@ func Info(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func info(name string) (*model.WavFileDetails, error) {
-	dbConnection, err := dbconnector.OpenDBConnection()
-	if err != nil {
-		return nil, fmt.Errorf("could not open database connection: %w", err)
-
-	}
-	defer dbConnection.Close()
-
-	details, err := dbConnection.GetWavDetails(name)
+func (p *RequestProcessor) info(name string) (*model.WavFileDetails, error) {
+	details, err := p.db.GetWavDetails(name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fileDoesNotExist

@@ -11,17 +11,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/emurray647/audioServer/internal/dbconnector"
 	"github.com/emurray647/audioServer/internal/format"
 	"github.com/emurray647/audioServer/internal/model"
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	writePrefix = "/data"
-)
+// const (
+// 	writePrefix = "/data"
+// )
 
-func Upload(w http.ResponseWriter, r *http.Request) {
+func (p *RequestProcessor) Upload(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("upload")
 
@@ -38,7 +37,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// upload the file
-	err = upload(name, buffer)
+	err = p.upload(name, buffer)
 	if err != nil {
 		err = fmt.Errorf("error uploading file: %w", err)
 		log.Errorf(err.Error())
@@ -58,7 +57,7 @@ func Upload(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func Delete(w http.ResponseWriter, r *http.Request) {
+func (p *RequestProcessor) Delete(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("delete")
 
@@ -69,7 +68,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := delete(filename)
+	err := p.delete(filename)
 	if err != nil {
 		log.Errorf("could not delete file: %w", err)
 		if errors.Is(err, fileDoesNotExist) {
@@ -83,17 +82,17 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	setSuccess(w, http.StatusOK, fmt.Sprintf("Successfully deleted file %s", filename))
 }
 
-func Download(w http.ResponseWriter, r *http.Request) {
+func (p *RequestProcessor) Download(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("download")
 
 	name := r.URL.Query().Get("name")
 	if name == "" {
-		http.Error(w, "no name value provided", http.StatusBadRequest)
+		setStatus(w, http.StatusBadRequest, "no name value provided", false)
 		return
 	}
 
-	buffer, err := download(name)
+	buffer, err := p.download(name)
 	if err != nil && errors.Is(err, fileDoesNotExist) {
 		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error(), false)
 		return
@@ -109,17 +108,9 @@ func Download(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func upload(filename string, data []byte) error {
-	// open db connection
-	dbConnection, err := dbconnector.OpenDBConnection()
-	if err != nil {
-		return fmt.Errorf("could not open database connection: %w", err)
-
-	}
-	defer dbConnection.Close()
-
+func (p *RequestProcessor) upload(filename string, data []byte) error {
 	// make sure this is not a duplicate entry
-	count, err := dbConnection.CountWavFiles(filename)
+	count, err := p.db.CountWavFiles(filename)
 	if err != nil {
 		return fmt.Errorf("failed to read database: %w", err)
 	}
@@ -141,7 +132,7 @@ func upload(filename string, data []byte) error {
 	}
 
 	// write the file to disk
-	fullpath := fmt.Sprintf("%s/%s", writePrefix, filename)
+	fullpath := fmt.Sprintf("%s/%s", p.filePrefix, filename)
 	err = os.WriteFile(fullpath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file to disk: %w", err)
@@ -152,7 +143,7 @@ func upload(filename string, data []byte) error {
 		WavFileDetails: *details,
 		URI:            fullpath,
 	}
-	err = dbConnection.AddWavFile(wav)
+	err = p.db.AddWavFile(wav)
 	if err != nil {
 		return fmt.Errorf("failed to put wav in db: %w", err)
 	}
@@ -160,15 +151,8 @@ func upload(filename string, data []byte) error {
 	return nil
 }
 
-func delete(filename string) error {
-	dbConnection, err := dbconnector.OpenDBConnection()
-	if err != nil {
-		return fmt.Errorf("could not open database connection: %w", err)
-
-	}
-	defer dbConnection.Close()
-
-	fileURI, err := dbConnection.DeleteWav(filename)
+func (p *RequestProcessor) delete(filename string) error {
+	fileURI, err := p.db.DeleteWav(filename)
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		return fileDoesNotExist
 	} else if err != nil {
@@ -182,15 +166,8 @@ func delete(filename string) error {
 	return nil
 }
 
-func download(filename string) ([]byte, error) {
-	dbConnection, err := dbconnector.OpenDBConnection()
-	if err != nil {
-		return nil, fmt.Errorf("could not open database connection: %w", err)
-
-	}
-	defer dbConnection.Close()
-
-	uri, err := dbConnection.GetWavURI(filename)
+func (p *RequestProcessor) download(filename string) ([]byte, error) {
+	uri, err := p.db.GetWavURI(filename)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fileDoesNotExist

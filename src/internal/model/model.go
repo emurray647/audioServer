@@ -3,6 +3,7 @@ package model
 type WavFileDetails struct {
 	Name           string   `json:"name"`
 	FileSize       int      `json:"file_size"`
+	Format         string   `json:"format"`
 	Duration       *float64 `json:"duration"`
 	NumChannels    *int     `json:"num_channels"`
 	SampleRate     *int     `json:"sample_rate"`

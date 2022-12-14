@@ -16,13 +16,7 @@ import (
 type WavParser struct{}
 
 func (WavParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) error {
-	// func ParseWav(name string, buffer []byte) (*model.WavFileDetails, error) {
-
-	// decoder := wav.NewDecoder(bytes.NewReader(buffer))
 	decoder := wav.NewDecoder(reader)
-
-	// fmt.Println(len(buffer))
-
 	decoder.ReadInfo()
 
 	if !decoder.IsValidFile() {
@@ -35,6 +29,7 @@ func (WavParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) erro
 		details.Duration = &seconds
 	}
 
+	details.Format = "wav"
 	details.NumChannels = &decoder.Format().NumChannels
 	details.SampleRate = &decoder.Format().SampleRate
 
