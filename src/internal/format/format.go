@@ -27,6 +27,7 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 
 	var parser Parser
 	fileExtension := filepath.Ext(name)
+	fmt.Println(fileExtension)
 	switch fileExtension {
 	case ".wav":
 		parser = WavParser{}
@@ -41,7 +42,11 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 			return nil, fmt.Errorf("failed parsing mp3 file: %w", InvalidFile)
 		}
 	default:
-		return nil, UnknownFormat
+		parser = unknownParser{}
+		err = parser.Parse(&result, reader)
+		if err != nil {
+			return nil, UnknownFormat
+		}
 	}
 
 	return &result, nil
@@ -50,4 +55,31 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 
 type Parser interface {
 	Parse(*model.WavFileDetails, io.ReadSeeker) error
+}
+
+type unknownParser struct {
+}
+
+func (p unknownParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) error {
+	var parser Parser
+	var err error
+
+	fmt.Println("wav")
+
+	parser = WavParser{}
+	err = parser.Parse(details, reader)
+	if err == nil {
+		// this parsed correctly, so must be a wav
+		return nil
+	}
+
+	fmt.Println("mp3")
+	parser = Mp3Parser{}
+	err = parser.Parse(details, reader)
+	if err == nil {
+		// this parsed correctly, so must be a mp3
+		return nil
+	}
+
+	return UnknownFormat
 }

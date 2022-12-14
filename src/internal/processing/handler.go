@@ -116,17 +116,15 @@ func (p *RequestProcessor) upload(filename string, data []byte) error {
 	// as well as get some stats about it
 	details, err := format.ParseFile(filename, data)
 	if err != nil && errors.Is(err, format.InvalidFile) {
-		fmt.Println("first error")
 		return invalidFileFormat
 	} else if err != nil && errors.Is(err, format.UnknownFormat) {
 		return unknownFileType
 	} else if err != nil {
-		fmt.Println("unknown error")
 		return err
 	}
 
 	// write the file to disk
-	fullpath := fmt.Sprintf("%s/%s", p.filePrefix, filename)
+	fullpath := fmt.Sprintf("%s/%s", p.filePrefix, details.Name)
 	err = os.WriteFile(fullpath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write file to disk: %w", err)
@@ -179,7 +177,7 @@ func (p *RequestProcessor) download(filename string) ([]byte, error) {
 
 func generateName(buffer []byte) string {
 	hash := md5.Sum(buffer)
-	return fmt.Sprintf("%s.wav", hex.EncodeToString(hash[:]))
+	return fmt.Sprintf("%s", hex.EncodeToString(hash[:]))
 }
 
 func setStatus(w http.ResponseWriter, statusCode int, message string, success bool) {
