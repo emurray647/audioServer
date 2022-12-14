@@ -243,15 +243,15 @@ A brief description of the files:
 - `src`: directory containing all the go source code for the project
 - `test`: directory containing the test setup Dockerfile, as well as sample files with which to test
 
-A MySQL database is 
 
 Since databases aren't optimized to contain large file, the decision was made to write the file
 to disk, and then store the metadata for the file in MySQL, as well as the URI of where the file
 was written.  Then the `/list` and `/info` endpoints just have to query the DB to get the appropriate
 metdata, while `/download` hits the DB to get the URI, and then returns a copy of the file.
 
-Name generation
-
+If a file is uploaded and not provided a name, then the `md5` hash of the contents will be
+used as its name instead.  This was done so that we can still detect if a duplicate
+file is attempting to be uploaded.
 
 ## Future Improvements
 

@@ -30,6 +30,9 @@ func InitializeRoutes(db *dbconnector.DBConnection, filePrefix string) http.Hand
 	// GET /info
 	r.HandleFunc("/info", processor.Info).Methods("GET")
 
+	// return the correct error code if non of the endpoints matched
+	r.PathPrefix("/").HandlerFunc(processor.UnknownPath)
+
 	return middleware(r)
 }
 

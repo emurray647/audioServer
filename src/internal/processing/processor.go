@@ -1,6 +1,8 @@
 package processing
 
 import (
+	"net/http"
+
 	"github.com/emurray647/audioServer/internal/dbconnector"
 )
 
@@ -14,4 +16,8 @@ func NewRequestProcessor(db *dbconnector.DBConnection, filePrefix string) *Reque
 		db:         db,
 		filePrefix: filePrefix,
 	}
+}
+
+func (RequestProcessor) UnknownPath(w http.ResponseWriter, r *http.Request) {
+	setStatus(w, http.StatusNotFound, "path does not exist", false)
 }

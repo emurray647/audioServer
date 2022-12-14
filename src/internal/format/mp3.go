@@ -29,14 +29,28 @@ func (Mp3Parser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) erro
 
 		duration += float64(frame.Duration().Seconds())
 		samples += frame.Samples()
+
+		// fmt.Println(frame.)
+		// frame.Header().
+
 	}
 
 	details.Format = "mp3"
 	details.Duration = &duration
 	avgBytesPerSec := uint32(float64(details.FileSize) / duration)
 	details.AvgBytesPerSec = &avgBytesPerSec
-	sampleRate := samples / int(duration)
+
+	// TODO: not sure with the mp3 logic here... I think it might be right, but not sure
+	numChannels := 1
+	channelMode := frame.Header().ChannelMode()
+	if channelMode == mp3.DualChannel || channelMode == mp3.JointStereo {
+		numChannels = 2
+	}
+	details.NumChannels = &numChannels
+
+	sampleRate := samples * numChannels / int(duration)
 	details.SampleRate = &sampleRate
+	// TODO end
 
 	return nil
 }
