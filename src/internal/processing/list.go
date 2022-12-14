@@ -35,10 +35,6 @@ func (p *RequestProcessor) CreateListHandler() http.HandlerFunc {
 
 	}
 
-	for k, v := range queryMap {
-		fmt.Printf("%s: %s\n", k, v)
-	}
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		values := r.URL.Query()
 

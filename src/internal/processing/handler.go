@@ -16,13 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// const (
-// 	writePrefix = "/data"
-// )
-
 func (p *RequestProcessor) Upload(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Println("upload")
 
 	// grab the data from the request and grab the name parameter (if applicable)
 	buffer, err := ioutil.ReadAll(r.Body)
@@ -118,7 +112,7 @@ func (p *RequestProcessor) upload(filename string, data []byte) error {
 		return fileAlreadyExists
 	}
 
-	// before we write this file, we should verify it is a wav
+	// before we write this file, we should verify it is a valid file
 	// as well as get some stats about it
 	details, err := format.ParseFile(filename, data)
 	if err != nil && errors.Is(err, format.InvalidFile) {
