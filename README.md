@@ -37,7 +37,8 @@ For the full list of third party packages, see [go.mod](https://github.com/emurr
 To build this application, simply run `make` or `docker-compose build`.  Then to run,
 use the command `make start` or `docker-compose up`.  This will start up a server at
 `localhost:8080` that you can send requests to.  For the format of the requests, see 
-[Endpoints](#endpoints).
+[Endpoints](#endpoints).  When you are done, the server can be brought down with `make stop`
+or `docker-compose down`.
 
 For running tests, the command `make test` will start up a test API docker container as well
 as a test client docker container that will send some requests to the server and assert
@@ -291,3 +292,10 @@ the file from any of our nodes.
 
 The metadata that is pulled from each file is currently minimal.  There is additional data,
 such as artist, which would be neat to be able to search for/filter on.
+
+### Better Security
+
+Add some sort of authorization to be able to upload/download/inspect data.  Additionally,
+take a little more care to prevent injection attacks.  For instance, currently
+the info endpoint `/info?name={name}` queries the database with the unescaped name.
+We should be checking to make sure the input is sanitized before using it.
