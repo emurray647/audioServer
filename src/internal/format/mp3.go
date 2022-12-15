@@ -7,9 +7,10 @@ import (
 	"github.com/tcolgate/mp3"
 )
 
+// A parser to parse MP3 files
 type Mp3Parser struct{}
 
-func (Mp3Parser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) error {
+func (Mp3Parser) Parse(details *model.AudioFileDetails, reader io.ReadSeeker) error {
 	decoder := mp3.NewDecoder(reader)
 
 	duration := 0.0
@@ -23,15 +24,11 @@ func (Mp3Parser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) erro
 			if err == io.EOF {
 				break
 			}
-
 			return err
 		}
 
 		duration += float64(frame.Duration().Seconds())
 		samples += frame.Samples()
-
-		// fmt.Println(frame.)
-		// frame.Header().
 
 	}
 

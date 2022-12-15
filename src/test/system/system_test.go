@@ -45,8 +45,8 @@ func checkError(err error) {
 
 func TestAPI(t *testing.T) {
 	var statusMessage model.StatusMessage
-	var listResult []model.WavFileDetails
-	var infoResult model.WavFileDetails
+	var listResult []model.AudioFileDetails
+	var infoResult model.AudioFileDetails
 
 	buffer, err := os.ReadFile("/samples/cantina.wav")
 	checkError(err)

@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -22,14 +21,14 @@ var (
 func main() {
 	flag.Parse()
 
-	fmt.Printf("using user %s\n", *dbUser)
-
+	// wait a couple seconds to give the DB a chance to come up
 	time.Sleep(2 * time.Second)
 
 	db, err := dbconnector.OpenDBConnection(*dbUser, *dbPass, *dbHost, *dbName)
 	if err != nil {
 		panic(err)
 	}
+	defer db.Close()
 
 	router := routing.InitializeRoutes(db, *fileDirectory)
 

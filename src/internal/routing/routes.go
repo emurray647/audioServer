@@ -9,10 +9,9 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// func InitializeRoutes() *mux.Router {
+// initialize all the endpoints for this API
 func InitializeRoutes(db *dbconnector.DBConnection, filePrefix string) http.Handler {
 	r := mux.NewRouter()
-
 	processor := processing.NewRequestProcessor(db, filePrefix)
 
 	// POST /files
@@ -36,6 +35,7 @@ func InitializeRoutes(db *dbconnector.DBConnection, filePrefix string) http.Hand
 	return middleware(r)
 }
 
+// helper to strip trailing /'s off of requests to make our matching easier
 func middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

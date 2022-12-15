@@ -14,11 +14,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// this file holds all the logic for the /list endpoint
+
+// CreateListHandler - creates a new HandlerFunc for the /list endpoin
 func (p *RequestProcessor) CreateListHandler() http.HandlerFunc {
 
 	// build a map from query name to string we want to use to filter
 	// ex maxduration maps to "duration <= {value}"
-	var temp model.WavFileDetails
+	var temp model.AudioFileDetails
 	t := reflect.TypeOf(temp)
 	queryMap := make(map[string]string)
 
@@ -41,20 +44,20 @@ func (p *RequestProcessor) CreateListHandler() http.HandlerFunc {
 		details, err := p.list(values, queryMap)
 		if err != nil {
 			log.Errorf(err.Error())
-			setStatus(w, http.StatusInternalServerError, "unknown err", false)
+			setStatus(w, http.StatusInternalServerError, "unknown err")
 			return
 		}
 
 		err = json.NewEncoder(w).Encode(details)
 		if err != nil {
 			log.Errorf(err.Error())
-			setStatus(w, http.StatusInternalServerError, "failed to encode wav JSON", false)
+			setStatus(w, http.StatusInternalServerError, "failed to encode file JSON")
 			return
 		}
 	}
 }
 
-func (p *RequestProcessor) list(values url.Values, queryMap map[string]string) (*model.WavFilesDetailsSlice, error) {
+func (p *RequestProcessor) list(values url.Values, queryMap map[string]string) (*model.AudioFileDetailsSlice, error) {
 	// create a slice for all the filters we want to apply for this search
 	filters := make([]string, 0)
 	for key, value := range values {
@@ -69,9 +72,9 @@ func (p *RequestProcessor) list(values url.Values, queryMap map[string]string) (
 		filters = append(filters, filterString)
 	}
 
-	result, err := p.db.GetWavs(filters)
+	result, err := p.db.GetFiles(filters)
 	if err != nil {
-		return nil, fmt.Errorf("failed retrieving wav details from db: %w", err)
+		return nil, fmt.Errorf("failed retrieving file details from db: %w", err)
 	}
 
 	return result, nil

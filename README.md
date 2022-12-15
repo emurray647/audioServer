@@ -124,13 +124,10 @@ List all files that match provided conditions
 | num_channels | the number of channels in the file |
 | minnum_channels | |
 | maxnum_channels | |
-| sample_rate | |
+| sample_rate | the sample_rate (samples/second) of the file |
 | minsample_rate | |
 | maxsample_rate | |
-| audio_format | |
-| minaudio_format | |
-| maxaudio_format | |
-| avg_bytes_per_second | |
+| avg_bytes_per_second | number of bytes per second of the file |
 | minavg_bytes_per_second | |
 | maxavg_bytes_per_second | |
 
@@ -145,7 +142,6 @@ On success, will return a JSON object such as
     "duration": 10.0039,
     "num_channels": 1,
     "sample_rate": 22050,
-    "audio_format": 1,
     "avg_bytes_per_second": 44100
   },
   {
@@ -154,7 +150,6 @@ On success, will return a JSON object such as
     "duration": 60.0008,
     "num_channels": 1,
     "sample_rate": 22050,
-    "audio_format": 1,
     "avg_bytes_per_second": 44100
   }
 ]
@@ -201,7 +196,6 @@ On success will return a message of the form
   "duration": 60.0008,
   "num_channels": 1,
   "sample_rate": 22050,
-  "audio_format": 1,
   "avg_bytes_per_second": 44100
 }
 ```
@@ -296,4 +290,4 @@ the file from any of our nodes.
 ### Additional Metadata
 
 The metadata that is pulled from each file is currently minimal.  There is additional data,
-such as artist, which would be neat to be able to search for.
+such as artist, which would be neat to be able to search for/filter on.

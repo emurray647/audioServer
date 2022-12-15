@@ -7,9 +7,10 @@ import (
 	"github.com/go-audio/wav"
 )
 
+// A parser to parse wav files
 type WavParser struct{}
 
-func (WavParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) error {
+func (WavParser) Parse(details *model.AudioFileDetails, reader io.ReadSeeker) error {
 	decoder := wav.NewDecoder(reader)
 	decoder.ReadInfo()
 
@@ -26,8 +27,6 @@ func (WavParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) erro
 	details.Format = "wav"
 	details.NumChannels = &decoder.Format().NumChannels
 	details.SampleRate = &decoder.Format().SampleRate
-
-	details.AudioFormat = &decoder.WavAudioFormat
 	details.AvgBytesPerSec = &decoder.AvgBytesPerSec
 
 	return nil

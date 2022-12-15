@@ -13,12 +13,13 @@ import (
 var UnknownFormat error = errors.New("unknown file format")
 var InvalidFile error = errors.New("invalid audio file")
 
-func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
-
+// ParseFile parses an audio file and returns an AudioFileDetails object
+// name - the name of the file
+// buffer - the files contents
+func ParseFile(name string, buffer []byte) (*model.AudioFileDetails, error) {
 	reader := bytes.NewReader(buffer)
 
-	// var result *model.WavFileDetails
-	result := model.WavFileDetails{
+	result := model.AudioFileDetails{
 		Name:     name,
 		FileSize: len(buffer),
 		Format:   "unknown",
@@ -27,7 +28,6 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 
 	var parser Parser
 	fileExtension := filepath.Ext(name)
-	fmt.Println(fileExtension)
 	switch fileExtension {
 	case ".wav":
 		parser = WavParser{}
@@ -50,21 +50,20 @@ func ParseFile(name string, buffer []byte) (*model.WavFileDetails, error) {
 	}
 
 	return &result, nil
-
 }
 
+// Generic interface to implement for all the different methods of parsing audio files
 type Parser interface {
-	Parse(*model.WavFileDetails, io.ReadSeeker) error
+	Parse(*model.AudioFileDetails, io.ReadSeeker) error
 }
 
+// A parser implementation for if we do not know the format ahead of time
 type unknownParser struct {
 }
 
-func (p unknownParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker) error {
+func (p unknownParser) Parse(details *model.AudioFileDetails, reader io.ReadSeeker) error {
 	var parser Parser
 	var err error
-
-	fmt.Println("wav")
 
 	parser = WavParser{}
 	err = parser.Parse(details, reader)
@@ -73,7 +72,6 @@ func (p unknownParser) Parse(details *model.WavFileDetails, reader io.ReadSeeker
 		return nil
 	}
 
-	fmt.Println("mp3")
 	parser = Mp3Parser{}
 	err = parser.Parse(details, reader)
 	if err == nil {

@@ -34,6 +34,7 @@ services:
     volumes:
       - db:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    # silence the output of this container
     logging:
       driver: "none"
 

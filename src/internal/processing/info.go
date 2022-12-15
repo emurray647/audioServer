@@ -11,21 +11,23 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// This file holds the logic for handling the /info endpoint
+
 func (p *RequestProcessor) Info(w http.ResponseWriter, r *http.Request) {
 
 	name := r.URL.Query().Get("name")
 	if name == "" {
 		log.Info("Info did not receive name param")
-		setStatus(w, http.StatusBadRequest, "did not receive name param", false)
+		setStatus(w, http.StatusBadRequest, "did not receive name param")
 		return
 	}
 
 	details, err := p.info(name)
 	if err != nil && errors.Is(err, fileDoesNotExist) {
-		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error(), false)
+		setStatus(w, http.StatusNotFound, fileDoesNotExist.Error())
 		return
 	} else if err != nil {
-		setStatus(w, http.StatusInternalServerError, "unknown error", false)
+		setStatus(w, http.StatusInternalServerError, "unknown error")
 		return
 	}
 
@@ -35,13 +37,13 @@ func (p *RequestProcessor) Info(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (p *RequestProcessor) info(name string) (*model.WavFileDetails, error) {
-	details, err := p.db.GetWavDetails(name)
+func (p *RequestProcessor) info(name string) (*model.AudioFileDetails, error) {
+	details, err := p.db.GetFileDetails(name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fileDoesNotExist
 		}
-		return nil, fmt.Errorf("failed getting wav details: %w", err)
+		return nil, fmt.Errorf("failed getting file details: %w", err)
 	}
 
 	return details, nil

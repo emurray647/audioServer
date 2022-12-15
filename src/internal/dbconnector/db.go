@@ -8,10 +8,14 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+const tableName = "audio_db.audio_files"
+
+// A struct to handle all interactions with the database
 type DBConnection struct {
 	DB *sql.DB
 }
 
+// Opens a connection to the database
 func OpenDBConnection(dbUser, dbPass, dbHost, dbName string) (*DBConnection, error) {
 	cfg := mysql.Config{
 		User:                 dbUser,
@@ -33,44 +37,49 @@ func OpenDBConnection(dbUser, dbPass, dbHost, dbName string) (*DBConnection, err
 	return connection, nil
 }
 
+// Closes a database connection
 func (dc *DBConnection) Close() {
 	dc.DB.Close()
 }
 
-func (dc *DBConnection) CountWavFiles(name string) (int, error) {
-	queryString := fmt.Sprintf("SELECT count(*) FROM audio_db.wavs WHERE name='%s'", name)
+// Counts the number of entries in the table with the provided name
+//    should be at most one
+func (dc *DBConnection) CountFiles(name string) (int, error) {
+	queryString := fmt.Sprintf("SELECT count(*) FROM %s WHERE name='%s'", tableName, name)
 	row := dc.DB.QueryRow(queryString)
 	var count int
 	err := row.Scan(&count)
 	return count, err
 }
 
-func (dc *DBConnection) AddWavFile(wav *model.WavFile) error {
-	_, err := dc.DB.Exec("INSERT INTO audio_db.wavs "+
-		"(name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second, file_uri) "+
-		"VALUES (?,?,?,?,?,?,?,?,?);",
-		wav.Name, wav.FileSize, wav.Format, wav.Duration, wav.NumChannels, wav.SampleRate, wav.AudioFormat, wav.AvgBytesPerSec, wav.URI)
+// Adds an audio file to the database
+func (dc *DBConnection) AddFile(file *model.AudioFile) error {
+	_, err := dc.DB.Exec("INSERT INTO "+tableName+
+		" (name, file_size, format, duration, num_channels, sample_rate, avg_bytes_per_second, file_uri) "+
+		"VALUES (?,?,?,?,?,?,?,?);",
+		file.Name, file.FileSize, file.Format, file.Duration, file.NumChannels, file.SampleRate, file.AvgBytesPerSec, file.URI)
 	if err != nil {
 		return fmt.Errorf("failed to execute SQL statement: %w", err)
 	}
 	return nil
 }
 
-func (dc *DBConnection) DeleteWav(name string) (string, error) {
+// Deletes an audio file entry from the database
+func (dc *DBConnection) DeleteFile(name string) (string, error) {
 	tx, err := dc.DB.Begin()
 	if err != nil {
 		return "", fmt.Errorf("failed creating db transaction")
 	}
 	defer tx.Rollback()
 
-	queryString := fmt.Sprintf("SELECT file_uri FROM audio_db.wavs WHERE name='%s';", name)
+	queryString := fmt.Sprintf("SELECT file_uri FROM %s WHERE name='%s';", tableName, name)
 	row := tx.QueryRow(queryString)
 	var fileURI string
 	if err = row.Scan(&fileURI); err != nil {
 		return "", err
 	}
 
-	execString := fmt.Sprintf("DELETE FROM audio_db.wavs WHERE name='%s'", name)
+	execString := fmt.Sprintf("DELETE FROM %s WHERE name='%s'", tableName, name)
 	_, err = tx.Exec(execString)
 	if err = tx.Commit(); err != nil {
 		return "", fmt.Errorf("failed to commit transaction")
@@ -79,8 +88,9 @@ func (dc *DBConnection) DeleteWav(name string) (string, error) {
 	return fileURI, err
 }
 
-func (dc *DBConnection) GetWavURI(name string) (string, error) {
-	queryString := fmt.Sprintf("SELECT file_uri FROM audio_db.wavs WHERE name='%s'", name)
+// Gets the URI associated with the file name provided
+func (dc *DBConnection) GetFileURI(name string) (string, error) {
+	queryString := fmt.Sprintf("SELECT file_uri FROM %s WHERE name='%s'", tableName, name)
 	row := dc.DB.QueryRow(queryString)
 
 	var uri string
@@ -88,17 +98,17 @@ func (dc *DBConnection) GetWavURI(name string) (string, error) {
 	return uri, err
 }
 
-func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error) {
-
+// Retrieves the AudioFileDetails associated with the provided file name
+func (dc *DBConnection) GetFileDetails(name string) (*model.AudioFileDetails, error) {
 	queryString := fmt.Sprintf("SELECT "+
-		"name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second "+
-		"FROM audio_db.wavs WHERE name='%s'", name)
+		"name, file_size, format, duration, num_channels, sample_rate, avg_bytes_per_second "+
+		"FROM %s WHERE name='%s'", tableName, name)
 	row := dc.DB.QueryRow(queryString)
 
-	var details model.WavFileDetails
+	var details model.AudioFileDetails
 
-	err := row.Scan(&details.Name, &details.FileSize, &details.Format, &details.Duration, &details.NumChannels, &details.SampleRate,
-		&details.AudioFormat, &details.AvgBytesPerSec)
+	err := row.Scan(&details.Name, &details.FileSize, &details.Format, &details.Duration, &details.NumChannels,
+		&details.SampleRate, &details.AvgBytesPerSec)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to read details from DB: %w", err)
@@ -107,10 +117,11 @@ func (dc *DBConnection) GetWavDetails(name string) (*model.WavFileDetails, error
 	return &details, nil
 }
 
-func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsSlice, error) {
-	queryString := fmt.Sprintf("SELECT " +
-		"name, file_size, format, duration, num_channels, sample_rate, audio_format, avg_bytes_per_second" +
-		" FROM audio_db.wavs")
+// Gets all the AudioFileDetails that satisfy the provided filters
+func (dc *DBConnection) GetFiles(filterStrings []string) (*model.AudioFileDetailsSlice, error) {
+	queryString := fmt.Sprintf("SELECT "+
+		"name, file_size, format, duration, num_channels, sample_rate, avg_bytes_per_second"+
+		" FROM %s", tableName)
 
 	if len(filterStrings) > 0 {
 		queryString += " WHERE " + filterStrings[0]
@@ -124,11 +135,11 @@ func (dc *DBConnection) GetWavs(filterStrings []string) (*model.WavFilesDetailsS
 		return nil, fmt.Errorf("failed querying database: %w", err)
 	}
 
-	var result model.WavFilesDetailsSlice
+	var result model.AudioFileDetailsSlice
 	for rows.Next() {
-		details := model.WavFileDetails{}
+		details := model.AudioFileDetails{}
 		err = rows.Scan(&details.Name, &details.FileSize, &details.Format, &details.Duration, &details.NumChannels,
-			&details.SampleRate, &details.AudioFormat, &details.AvgBytesPerSec)
+			&details.SampleRate, &details.AvgBytesPerSec)
 		if err != nil {
 			return &result, fmt.Errorf("error scanning query result: %w", err)
 		}
